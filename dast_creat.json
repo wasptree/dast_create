@@ -1,0 +1,20 @@
+{
+    "name":"DAST Demo App",
+    "scans":[
+       {
+          "scan_config_request":{
+             "target_url":{
+                "url":"http://wasptree.com"
+             }
+          }
+       }
+    ],
+    "schedule":{
+       "duration":{
+          "length":1,
+          "unit":"DAY"
+       },
+       "scheduled":true,
+       "now":true
+    }
+ }
