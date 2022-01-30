@@ -1,0 +1,85 @@
+trigger:
+- master
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  solution: '**/*.sln'
+  buildPlatform: 'Any CPU'
+  buildConfiguration: 'Release'
+
+steps:
+      
+#Submit DAST Scan to Veracode
+- task: CmdLine@2
+  displayName: VC - Install Veracode Auth
+  inputs:
+    script: |
+      pip install veracode-api-signing
+- task: CmdLine@2
+  displayName: VC - Apply Creds
+  inputs:
+    script: |
+      echo [default] >> credentials.txt
+      echo veracode_api_key_id = $(VERACODE_API_KEY_ID) >> credentials.txt
+      echo veracode_api_key_secret = $(VERACODE_API_KEY_SECRET) >> credentials.txt
+      mkdir c:\Users\VssAdministrator\.veracode
+      cp credentials.txt c:\Users\VssAdministrator\.veracode\credentials
+- task: CmdLine@2
+  displayName: VC - Create DA json
+  inputs:
+    script: |
+      echo        { >> da_scan.json
+      echo          "name": "AZURE DAST PIPELINE", >> da_scan.json
+      echo          "scans": [ >> da_scan.json
+      echo            { >> da_scan.json
+      echo              "scan_config_request": { >> da_scan.json
+      echo                "target_url": { >> da_scan.json
+      echo                  "url": "http://wasptree.com" >> da_scan.json
+      echo                } >> da_scan.json
+      echo              } >> da_scan.json
+      echo            } >> da_scan.json
+      echo          ], >> da_scan.json
+      echo          "schedule": { >> da_scan.json
+      echo            "duration": { >> da_scan.json
+      echo              "length": 1, >> da_scan.json
+      echo              "unit": "DAY" >> da_scan.json
+      echo            }, >> da_scan.json
+      echo            "scheduled": true, >> da_scan.json
+      echo            "now": true >> da_scan.json
+      echo          } >> da_scan.json
+      echo        } >> da_scan.json
+- task: PythonScript@0
+  displayName: VC - kick off DAST scan
+  inputs:
+    scriptSource: 'inline'
+    script: |
+      import sys
+      import json
+      import requests
+      from veracode_api_signing.plugin_requests import RequestsAuthPluginVeracodeHMAC
+      
+      
+      api_base = "https://api.veracode.com/was/configservice/v1"
+      headers = {"User-Agent": "Start DA Scan Example", 'Content-type': 'application/json'}
+      
+      
+      if __name__ == "__main__":
+      
+          try:
+              contents = open('da_scan.json', 'rb').read()
+              print(contents)
+              response = requests.post(api_base + "/analyses", auth=RequestsAuthPluginVeracodeHMAC(), data=contents, headers=headers)
+          except requests.RequestException as e:
+              print("Failed...")
+              print(e)
+              sys.exit(1)
+      
+          if response.ok:
+              print(response.status_code)
+              print(response.content)
+      
+          else:
+              print(response.status_code)
+              print(response.content)
