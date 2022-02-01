@@ -21,39 +21,35 @@ steps:
   displayName: VC - Apply Creds
   inputs:
     script: |
-      cat > credentials.txt << 'EOF'
-      [default]
-      veracode_api_key_id = $(VERACODE_API_KEY_ID)
-      veracode_api_key_secret = $(VERACODE_API_KEY_SECRET)
-      EOF
+      echo [default] >> credentials.txt
+      echo veracode_api_key_id = $(VERACODE_API_KEY_ID) >> credentials.txt
+      echo veracode_api_key_secret = $(VERACODE_API_KEY_SECRET) >> credentials.txt
       mkdir c:\Users\VssAdministrator\.veracode
       cp credentials.txt c:\Users\VssAdministrator\.veracode\credentials
 - task: CmdLine@2
   displayName: VC - Create DA json
   inputs:
     script: |
-      cat > da_scan.json << 'EOF'
-      {
-          "name":"DAST Demo App",
-          "scans":[
-            {
-                "scan_config_request":{
-                  "target_url":{
-                      "url":"http://wasptree.com"
-                  }
-                }
-            }
-          ],
-          "schedule":{
-            "duration":{
-                "length":1,
-                "unit":"DAY"
-            },
-            "scheduled":true,
-            "now":true
-          }
-      }
-      EOF
+      echo        { >> da_scan.json
+      echo          "name": "AZURE DAST PIPELINE", >> da_scan.json
+      echo          "scans": [ >> da_scan.json
+      echo            { >> da_scan.json
+      echo              "scan_config_request": { >> da_scan.json
+      echo                "target_url": { >> da_scan.json
+      echo                  "url": "http://wasptree.com" >> da_scan.json
+      echo                } >> da_scan.json
+      echo              } >> da_scan.json
+      echo            } >> da_scan.json
+      echo          ], >> da_scan.json
+      echo          "schedule": { >> da_scan.json
+      echo            "duration": { >> da_scan.json
+      echo              "length": 1, >> da_scan.json
+      echo              "unit": "DAY" >> da_scan.json
+      echo            }, >> da_scan.json
+      echo            "scheduled": true, >> da_scan.json
+      echo            "now": true >> da_scan.json
+      echo          } >> da_scan.json
+      echo        } >> da_scan.json
 - task: PythonScript@0
   displayName: VC - kick off DAST scan
   inputs:
